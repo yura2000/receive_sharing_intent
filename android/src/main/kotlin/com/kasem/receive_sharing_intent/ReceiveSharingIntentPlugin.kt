@@ -7,6 +7,7 @@ import android.media.MediaMetadataRetriever
 import android.media.ThumbnailUtils
 import android.net.Uri
 import android.provider.MediaStore
+import android.util.Log
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
@@ -30,6 +31,8 @@ private const val EVENTS_CHANNEL_TEXT = "receive_sharing_intent/events-text"
 
 class ReceiveSharingIntentPlugin : FlutterPlugin, ActivityAware, MethodCallHandler,
         EventChannel.StreamHandler, NewIntentListener {
+
+    private val TAG = "INTENT HANDLER";
 
     private var initialMedia: JSONArray? = null
     private var latestMedia: JSONArray? = null
@@ -112,6 +115,24 @@ class ReceiveSharingIntentPlugin : FlutterPlugin, ActivityAware, MethodCallHandl
 
     private fun handleIntent(intent: Intent, initial: Boolean) {
         when {
+            (intent.type?.contains("epub") == true) -> { // View epub
+                val uri = intent.data
+                val path = FileDirectory.getAbsolutePath(applicationContext, uri)
+                Log.d(TAG, path)
+                if (path != null) {
+                    val type = getMediaType(path)
+                    val value = JSONArray().put(
+                            JSONObject()
+                                    .put("path", path)
+                                    .put("type", type.ordinal)
+                    )
+                    if (initial) initialMedia = value
+                    latestMedia = value
+                    Log.d(TAG, latestMedia?.toString())
+
+                    eventSinkMedia?.success(latestMedia?.toString())
+                } else null
+            }
             (intent.type?.startsWith("text") != true)
                     && (intent.action == Intent.ACTION_SEND
                     || intent.action == Intent.ACTION_SEND_MULTIPLE) -> { // Sharing images or videos
