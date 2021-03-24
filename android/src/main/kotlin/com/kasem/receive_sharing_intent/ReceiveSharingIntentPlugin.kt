@@ -115,7 +115,7 @@ class ReceiveSharingIntentPlugin : FlutterPlugin, ActivityAware, MethodCallHandl
 
     private fun handleIntent(intent: Intent, initial: Boolean) {
         when {
-            ((intent.type?.contains("epub") == true) || (intent.type?.contains("lcpl")) -> { // View epub or lcpl
+            ((intent.type?.contains("epub") == true) || (intent.type?.contains("lcpl"))) -> { // View epub or lcpl
                 val uri = intent.data
                 val path = FileDirectory.getAbsolutePath(applicationContext, uri)
                 Log.d(TAG, path)
