@@ -114,7 +114,7 @@ class ReceiveSharingIntentPlugin : FlutterPlugin, ActivityAware, MethodCallHandl
     }
 
     private fun handleIntent(intent: Intent, initial: Boolean) {
-        val supportedTypesExist = (intent.type?.contains("epub") == true) || (intent.type?.contains("lcpl") == true)
+        val supportedTypesExist = (intent.type?.contains("epub") == true) || (intent.type?.contains("lcpl") == true) || (intent.type?.contains("lcp") == true)
 
         when {
             supportedTypesExist -> { // View epub or lcpl
