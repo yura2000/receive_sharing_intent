@@ -7,6 +7,7 @@ import android.media.MediaMetadataRetriever
 import android.media.ThumbnailUtils
 import android.net.Uri
 import android.provider.MediaStore
+import android.support.annotation.NonNull
 import android.util.Log
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
@@ -97,7 +98,7 @@ class ReceiveSharingIntentPlugin : FlutterPlugin, ActivityAware, MethodCallHandl
     }
 
 
-    override fun onMethodCall(call: MethodCall, result: Result) {
+    override fun onMethodCall(@NonNull call: MethodCall, @NonNull result: MethodChannel.Result) {
         when (call.method) {
             "getInitialMedia" -> result.success(initialMedia?.toString())
             "getInitialText" -> result.success(initialText)
@@ -136,7 +137,7 @@ class ReceiveSharingIntentPlugin : FlutterPlugin, ActivityAware, MethodCallHandl
                         latestMedia = value
                         Log.d(TAG, latestMedia?.toString())
 
-                        eventSinkMedia.success(latestMedia?.toString())
+                        eventSinkMedia?.success(latestMedia?.toString())
                     }
                 }
                 (intent.type?.startsWith("text") != true)
@@ -146,20 +147,20 @@ class ReceiveSharingIntentPlugin : FlutterPlugin, ActivityAware, MethodCallHandl
                     val value = getMediaUris(intent)
                     if (initial) initialMedia = value
                     latestMedia = value
-                    eventSinkMedia.success(latestMedia?.toString())
+                    eventSinkMedia?.success(latestMedia?.toString())
                 }
                 (intent.type == null || intent.type?.startsWith("text") == true)
                         && intent.action == Intent.ACTION_SEND -> { // Sharing text
                     val value = intent.getStringExtra(Intent.EXTRA_TEXT)
                     if (initial) initialText = value
                     latestText = value
-                    eventSinkText.success(latestText)
+                    eventSinkText?.success(latestText)
                 }
                 intent.action == Intent.ACTION_VIEW -> { // Opening URL
                     val value = intent.dataString
                     if (initial) initialText = value
                     latestText = value
-                    eventSinkText.success(latestText)
+                    eventSinkText?.success(latestText)
                 }
             }
         }
