@@ -16,9 +16,8 @@ import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
-import io.flutter.plugin.common.MethodChannel.Result
-import io.flutter.plugin.common.PluginRegistry.Registrar
 import io.flutter.plugin.common.PluginRegistry.NewIntentListener
+import io.flutter.plugin.common.PluginRegistry.Registrar
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -114,52 +113,54 @@ class ReceiveSharingIntentPlugin : FlutterPlugin, ActivityAware, MethodCallHandl
     }
 
     private fun handleIntent(intent: Intent, initial: Boolean) {
-	val filePath = intent?.data.path.toString()
-	val fileParts = filePath.split(".")
-	val extension = fileParts.last()
-	
-    val supportedTypesExist = (extension == "epub") || (extension == "lcpl")
+        val dataIntent = intent.data
+        if (dataIntent != null) {
+            val filePath = dataIntent.path?.toString()
+            val fileParts = filePath?.split(".")
+            val extension = fileParts?.last()
 
-        when {
-            supportedTypesExist -> { // View epub or lcpl
-                val uri = intent.data
-                val path = FileDirectory.getAbsolutePath(applicationContext, uri)
-                Log.d(TAG, path)
-                if (path != null) {
-                    val type = getMediaType(path)
-                    val value = JSONArray().put(
-                            JSONObject()
-                                    .put("path", path)
-                                    .put("type", type.ordinal)
-                    )
+            val supportedTypesExist = (extension == "epub") || (extension == "lcpl")
+
+            when {
+                supportedTypesExist -> { // View epub or lcpl
+                    val path = FileDirectory.getAbsolutePath(applicationContext, dataIntent)
+                    Log.d(TAG, path)
+                    if (path != null) {
+                        val type = getMediaType(path)
+                        val value = JSONArray().put(
+                                JSONObject()
+                                        .put("path", path)
+                                        .put("type", type.ordinal)
+                        )
+                        if (initial) initialMedia = value
+                        latestMedia = value
+                        Log.d(TAG, latestMedia?.toString())
+
+                        eventSinkMedia.success(latestMedia?.toString())
+                    }
+                }
+                (intent.type?.startsWith("text") != true)
+                        && (intent.action == Intent.ACTION_SEND
+                        || intent.action == Intent.ACTION_SEND_MULTIPLE) -> { // Sharing images or videos
+
+                    val value = getMediaUris(intent)
                     if (initial) initialMedia = value
                     latestMedia = value
-                    Log.d(TAG, latestMedia?.toString())
-
-                    eventSinkMedia?.success(latestMedia?.toString())
-                } else null
-            }
-            (intent.type?.startsWith("text") != true)
-                    && (intent.action == Intent.ACTION_SEND
-                    || intent.action == Intent.ACTION_SEND_MULTIPLE) -> { // Sharing images or videos
-
-                val value = getMediaUris(intent)
-                if (initial) initialMedia = value
-                latestMedia = value
-                eventSinkMedia?.success(latestMedia?.toString())
-            }
-            (intent.type == null || intent.type?.startsWith("text") == true)
-                    && intent.action == Intent.ACTION_SEND -> { // Sharing text
-                val value = intent.getStringExtra(Intent.EXTRA_TEXT)
-                if (initial) initialText = value
-                latestText = value
-                eventSinkText?.success(latestText)
-            }
-            intent.action == Intent.ACTION_VIEW -> { // Opening URL
-                val value = intent.dataString
-                if (initial) initialText = value
-                latestText = value
-                eventSinkText?.success(latestText)
+                    eventSinkMedia.success(latestMedia?.toString())
+                }
+                (intent.type == null || intent.type?.startsWith("text") == true)
+                        && intent.action == Intent.ACTION_SEND -> { // Sharing text
+                    val value = intent.getStringExtra(Intent.EXTRA_TEXT)
+                    if (initial) initialText = value
+                    latestText = value
+                    eventSinkText.success(latestText)
+                }
+                intent.action == Intent.ACTION_VIEW -> { // Opening URL
+                    val value = intent.dataString
+                    if (initial) initialText = value
+                    latestText = value
+                    eventSinkText.success(latestText)
+                }
             }
         }
     }
