@@ -118,8 +118,15 @@ class ReceiveSharingIntentPlugin : FlutterPlugin, ActivityAware, MethodCallHandl
             val filePath = dataIntent.path?.toString()
             val fileParts = filePath?.split(".")
             val extension = fileParts?.last()
+            val isEpubExists = intent.type?.split("/")?.last()?.contains("epub")
+            var isIntentTypeFileEpub = false
+            if (isEpubExists!=null){
+                isIntentTypeFileEpub = isEpubExists
+            }
 
-            val supportedTypesExist = (extension == "epub") || (extension == "lcpl")
+
+            val supportedTypesExist = isIntentTypeFileEpub || (extension == "epub") || (extension == "lcpl")
+
 
             when {
                 supportedTypesExist -> { // View epub or lcpl
